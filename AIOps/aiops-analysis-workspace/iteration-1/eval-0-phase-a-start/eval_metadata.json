@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "phase-a-start",
+  "prompt": "I'm starting an AIOps analysis for GlobalBank. I have 14 months of IMS and AMS ticket data from ServiceNow — about 45,000 records total. What do we do first?",
+  "assertions": []
+}

@@ -1,0 +1,41 @@
+{
+  "eval_id": 1,
+  "configuration": "without_skill",
+  "summary": {
+    "pass_rate": 0.6,
+    "passed": 3,
+    "failed": 2,
+    "total": 5
+  },
+  "timing": {
+    "total_duration_seconds": 33.7,
+    "total_tokens": 25755
+  },
+  "expectations": [
+    {
+      "text": "phase-b-correctly-identified",
+      "passed": true,
+      "evidence": "Treats as report generation, does not redo estimation"
+    },
+    {
+      "text": "asks-report-format",
+      "passed": false,
+      "evidence": "Asks Markdown/docx/pdf but never mentions Accenture HTML"
+    },
+    {
+      "text": "asks-client-and-date",
+      "passed": false,
+      "evidence": "Asks audience/save path, not client-name spelling or date; admits no TEP knowledge"
+    },
+    {
+      "text": "no-phase-a-content",
+      "passed": true,
+      "evidence": "Does not rebuild task inventory"
+    },
+    {
+      "text": "mentions-input-files",
+      "passed": true,
+      "evidence": "References s3-01..s3-03 by name"
+    }
+  ]
+}

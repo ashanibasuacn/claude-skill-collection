@@ -1,0 +1,41 @@
+{
+  "eval_id": 1,
+  "configuration": "with_skill",
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 5,
+    "failed": 0,
+    "total": 5
+  },
+  "timing": {
+    "total_duration_seconds": 21.3,
+    "total_tokens": 27522
+  },
+  "expectations": [
+    {
+      "text": "phase-b-correctly-identified",
+      "passed": true,
+      "evidence": "Identified as 'Session 3 of 3 (report phase)', skips attach"
+    },
+    {
+      "text": "asks-report-format",
+      "passed": true,
+      "evidence": "Offers Accenture HTML default + Plain HTML/Markdown/Other"
+    },
+    {
+      "text": "asks-client-and-date",
+      "passed": true,
+      "evidence": "Confirms client name spelling and document date"
+    },
+    {
+      "text": "no-phase-a-content",
+      "passed": true,
+      "evidence": "Does not rebuild the task inventory"
+    },
+    {
+      "text": "mentions-input-files",
+      "passed": true,
+      "evidence": "Lists s3-01..s3-03, notes optional s2-04"
+    }
+  ]
+}

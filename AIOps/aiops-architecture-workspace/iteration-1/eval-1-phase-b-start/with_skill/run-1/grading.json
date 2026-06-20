@@ -1,0 +1,41 @@
+{
+  "eval_id": 1,
+  "configuration": "with_skill",
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 5,
+    "failed": 0,
+    "total": 5
+  },
+  "timing": {
+    "total_duration_seconds": 25.2,
+    "total_tokens": 28019
+  },
+  "expectations": [
+    {
+      "text": "phase-b-correctly-identified",
+      "passed": true,
+      "evidence": "Identified as 'Session 2 of 3 (report phase)', skips attach step"
+    },
+    {
+      "text": "asks-report-format",
+      "passed": true,
+      "evidence": "Offers Accenture HTML default + Plain HTML/Markdown/Other"
+    },
+    {
+      "text": "asks-client-and-date",
+      "passed": true,
+      "evidence": "Confirms client name spelling and document date"
+    },
+    {
+      "text": "no-phase-a-content",
+      "passed": true,
+      "evidence": "No attempt to restart architecture design"
+    },
+    {
+      "text": "mentions-input-files",
+      "passed": true,
+      "evidence": "Lists s2-01..s2-04, notes optional s1-03 for F-## chips"
+    }
+  ]
+}

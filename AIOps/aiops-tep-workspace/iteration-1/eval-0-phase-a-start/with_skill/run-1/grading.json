@@ -1,0 +1,41 @@
+{
+  "eval_id": 0,
+  "configuration": "with_skill",
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 5,
+    "failed": 0,
+    "total": 5
+  },
+  "timing": {
+    "total_duration_seconds": 27.7,
+    "total_tokens": 31376
+  },
+  "expectations": [
+    {
+      "text": "phase-a-session-header-present",
+      "passed": true,
+      "evidence": "Header 'AIOps Task, Estimation & Planning Session \u2014 Session 3 of 3' + Phase A"
+    },
+    {
+      "text": "four-phase-structure-shown",
+      "passed": true,
+      "evidence": "Four-phase table with s3-01..s3-03 output files"
+    },
+    {
+      "text": "confirms-session-2-inputs",
+      "passed": true,
+      "evidence": "Lists s2-02/s2-03/s2-04 (and optional s2-01) as inputs"
+    },
+    {
+      "text": "confirms-tshirt-conversion",
+      "passed": true,
+      "evidence": "Shows XS=1-2..XL=21-40 conversion, offers override in Phase 1"
+    },
+    {
+      "text": "no-premature-estimates",
+      "passed": true,
+      "evidence": "States ground rules, produces no numbers before inventory"
+    }
+  ]
+}

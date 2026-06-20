@@ -1,0 +1,85 @@
+{
+  "skill_name": "aiops-architecture",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "We've finished the analysis session for GlobalBank. I have s1-01, s1-03 and s1-04 ready and want to design the target AIOps platform. Where do we start?",
+      "expected_output": "Session opening for Phase A: confirms the Session 1 inputs, shows the four-phase architecture structure (constraints, UC selection, platform design, release/governance plan), and asks Phase 1 constraint questions. Does NOT jump to tooling or platform recommendations before UC selection.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "phase-a-session-header-present",
+          "description": "Response contains the AIOps Architecture Session Phase A opening header (e.g. 'AIOps Architecture — Session 2 of 3' or equivalent)"
+        },
+        {
+          "name": "four-phase-structure-shown",
+          "description": "Response includes a table or list showing the four phases (constraints, UC selection, platform design, release/governance plan) and their output files (s2-01 through s2-04)"
+        },
+        {
+          "name": "confirms-session-1-inputs",
+          "description": "Response references the required Session 1 inputs (s1-01 context, s1-03 findings, s1-04 UC catalogue)"
+        },
+        {
+          "name": "asks-constraints-first",
+          "description": "Response asks Phase 1 constraint questions (cloud preference, data residency, team model, build-vs-buy) before designing the platform"
+        },
+        {
+          "name": "no-premature-tooling",
+          "description": "Response does NOT recommend specific tools, platforms, or architecture components before UC selection and constraint gathering"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "The architecture session for Meridian Logistics is done. I have my four session 2 files ready: s2-01 through s2-04. Time to generate the architecture report.",
+      "expected_output": "Phase B session opening: asks about report format, client name, logo, date, confidentiality. Does NOT re-run Phase A or ask for Session 1 analysis files.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "phase-b-correctly-identified",
+          "description": "Response correctly identifies this as Phase B (report generation) rather than Phase A (interactive architecture)"
+        },
+        {
+          "name": "asks-report-format",
+          "description": "Response asks about report format options — at minimum mentions Accenture HTML and at least one alternative"
+        },
+        {
+          "name": "asks-client-and-date",
+          "description": "Response asks for client name (exact spelling/case) and document date"
+        },
+        {
+          "name": "no-phase-a-content",
+          "description": "Response does NOT attempt to restart the architecture design or ask for Session 1 analysis inputs to redo discovery"
+        },
+        {
+          "name": "mentions-input-files",
+          "description": "Response references or lists the four s2 input files needed (s2-01 through s2-04), optionally noting s1-03 for F-## traceability"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We have the analysis findings and use-case catalogue for a retail banking client and need to figure out what platform to build and how to roll it out. How should I run this?",
+      "expected_output": "Correctly infers Phase A from the signals (has findings + UC catalogue, wants platform design). Opens with the structured four-phase architecture protocol and treats the reference architecture as a menu, not a template.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "infers-phase-a-from-context",
+          "description": "Response correctly infers this is Phase A (the user has Session 1 outputs and wants to design) without asking the user to clarify Phase A vs Phase B"
+        },
+        {
+          "name": "session-structure-shown",
+          "description": "Response presents the structured four-phase session layout with output files"
+        },
+        {
+          "name": "grounds-in-findings",
+          "description": "Response ties the design work to the Session 1 findings (F-##) and selected use cases rather than designing in the abstract"
+        },
+        {
+          "name": "reference-architecture-as-menu",
+          "description": "Response treats the reference architecture pattern library as a menu of options to select from, not a fixed template to copy wholesale"
+        }
+      ]
+    }
+  ]
+}

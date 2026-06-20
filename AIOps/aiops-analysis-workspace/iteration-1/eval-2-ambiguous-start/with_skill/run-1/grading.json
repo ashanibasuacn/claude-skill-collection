@@ -1,0 +1,36 @@
+{
+  "eval_id": 2,
+  "configuration": "with_skill",
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "timing": {
+    "total_duration_seconds": 63.4,
+    "total_tokens": 30901
+  },
+  "expectations": [
+    {
+      "text": "infers-phase-a-from-context",
+      "passed": true,
+      "evidence": "Goes straight to Phase A session opening without asking for clarification — correctly reads 'IMS tickets' and 'workshop transcripts' as Phase A signals"
+    },
+    {
+      "text": "session-structure-shown",
+      "passed": true,
+      "evidence": "Full four-phase table (Phase 0 through Phase 3) with focus and output file names"
+    },
+    {
+      "text": "acknowledges-mixed-input-types",
+      "passed": true,
+      "evidence": "Explicitly states: 'IMS ticket dump will give us quantitative findings; the transcripts will provide directional signals that we will clearly label throughout'"
+    },
+    {
+      "text": "no-generic-aiops-advice",
+      "passed": true,
+      "evidence": "Response follows the structured session opening protocol — no generic tips, no two-week plan, no best-practice lists"
+    }
+  ]
+}

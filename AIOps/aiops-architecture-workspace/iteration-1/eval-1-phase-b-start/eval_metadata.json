@@ -1,0 +1,19 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-1-phase-b-start",
+  "prompt": "The architecture session for Meridian Logistics is done. I have my four session 2 files ready: s2-01 through s2-04. Time to generate the architecture report.",
+  "assertions": [
+    "Response correctly identifies this as Phase B (report generation) rather than Phase A (interactive architecture)",
+    "Response asks about report format options \u00e2\u20ac\u201d at minimum mentions Accenture HTML and at least one alternative",
+    "Response asks for client name (exact spelling/case) and document date",
+    "Response does NOT attempt to restart the architecture design or ask for Session 1 analysis inputs to redo discovery",
+    "Response references or lists the four s2 input files needed (s2-01 through s2-04), optionally noting s1-03 for F-## traceability"
+  ],
+  "assertion_names": [
+    "phase-b-correctly-identified",
+    "asks-report-format",
+    "asks-client-and-date",
+    "no-phase-a-content",
+    "mentions-input-files"
+  ]
+}

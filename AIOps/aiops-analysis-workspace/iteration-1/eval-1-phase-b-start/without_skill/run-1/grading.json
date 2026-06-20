@@ -1,0 +1,41 @@
+{
+  "eval_id": 1,
+  "configuration": "without_skill",
+  "summary": {
+    "pass_rate": 0.6,
+    "passed": 3,
+    "failed": 2,
+    "total": 5
+  },
+  "timing": {
+    "total_duration_seconds": 36.7,
+    "total_tokens": 16556
+  },
+  "expectations": [
+    {
+      "text": "phase-b-correctly-identified",
+      "passed": false,
+      "evidence": "Guesses what s1-01 through s1-04 contain incorrectly. Knows it's a report step but doesn't know the Phase B workflow."
+    },
+    {
+      "text": "asks-report-format",
+      "passed": false,
+      "evidence": "Asks about audience (executive vs technical) but not the specific format options (Accenture HTML / Plain HTML / Markdown)"
+    },
+    {
+      "text": "asks-client-and-date",
+      "passed": true,
+      "evidence": "Asks 'Do you have a customer name/engagement context to include in the report header?' — correctly elicits client name"
+    },
+    {
+      "text": "no-phase-a-content",
+      "passed": true,
+      "evidence": "Does not attempt to re-run analysis; focuses on report generation"
+    },
+    {
+      "text": "mentions-input-files",
+      "passed": true,
+      "evidence": "References s1-01 through s1-04 (with guessed but incorrect descriptions of their contents)"
+    }
+  ]
+}

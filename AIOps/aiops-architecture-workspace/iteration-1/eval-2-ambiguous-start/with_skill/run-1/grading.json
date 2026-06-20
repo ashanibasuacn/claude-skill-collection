@@ -1,0 +1,36 @@
+{
+  "eval_id": 2,
+  "configuration": "with_skill",
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "timing": {
+    "total_duration_seconds": 39.3,
+    "total_tokens": 51906
+  },
+  "expectations": [
+    {
+      "text": "infers-phase-a-from-context",
+      "passed": true,
+      "evidence": "States 'this is Phase A ... not report generation'"
+    },
+    {
+      "text": "session-structure-shown",
+      "passed": true,
+      "evidence": "Four-phase table with output files shown"
+    },
+    {
+      "text": "grounds-in-findings",
+      "passed": true,
+      "evidence": "'every component must trace back to an F-## finding'"
+    },
+    {
+      "text": "reference-architecture-as-menu",
+      "passed": true,
+      "evidence": "Reads reference architecture as a fit-not-template menu before designing"
+    }
+  ]
+}

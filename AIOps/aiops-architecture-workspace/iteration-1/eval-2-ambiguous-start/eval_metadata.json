@@ -1,0 +1,17 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-2-ambiguous-start",
+  "prompt": "We have the analysis findings and use-case catalogue for a retail banking client and need to figure out what platform to build and how to roll it out. How should I run this?",
+  "assertions": [
+    "Response correctly infers this is Phase A (the user has Session 1 outputs and wants to design) without asking the user to clarify Phase A vs Phase B",
+    "Response presents the structured four-phase session layout with output files",
+    "Response ties the design work to the Session 1 findings (F-##) and selected use cases rather than designing in the abstract",
+    "Response treats the reference architecture pattern library as a menu of options to select from, not a fixed template to copy wholesale"
+  ],
+  "assertion_names": [
+    "infers-phase-a-from-context",
+    "session-structure-shown",
+    "grounds-in-findings",
+    "reference-architecture-as-menu"
+  ]
+}

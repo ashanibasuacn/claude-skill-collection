@@ -1,0 +1,36 @@
+{
+  "eval_id": 2,
+  "configuration": "without_skill",
+  "summary": {
+    "pass_rate": 0.0,
+    "passed": 0,
+    "failed": 4,
+    "total": 4
+  },
+  "timing": {
+    "total_duration_seconds": 39.9,
+    "total_tokens": 22582
+  },
+  "expectations": [
+    {
+      "text": "infers-phase-a-from-context",
+      "passed": false,
+      "evidence": "Misreads as generic banking platform build; no AIOps Phase A framing"
+    },
+    {
+      "text": "session-structure-shown",
+      "passed": false,
+      "evidence": "Generic Stage 1-4 approach, not the AIOps 4-phase structure"
+    },
+    {
+      "text": "grounds-in-findings",
+      "passed": false,
+      "evidence": "No F-## traceability to Session 1 findings"
+    },
+    {
+      "text": "reference-architecture-as-menu",
+      "passed": false,
+      "evidence": "No reference architecture pattern library mentioned"
+    }
+  ]
+}

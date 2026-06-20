@@ -1,0 +1,41 @@
+{
+  "eval_id": 0,
+  "configuration": "with_skill",
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 5,
+    "failed": 0,
+    "total": 5
+  },
+  "timing": {
+    "total_duration_seconds": 78.8,
+    "total_tokens": 31280
+  },
+  "expectations": [
+    {
+      "text": "phase-a-session-header-present",
+      "passed": true,
+      "evidence": "Response opens with 'AIOps Analysis Session — Session 1 of 3' exactly as defined in the phase-a reference"
+    },
+    {
+      "text": "four-phase-table-shown",
+      "passed": true,
+      "evidence": "Response includes a markdown table with Phase 0 through Phase 3, their focus areas, and named output files"
+    },
+    {
+      "text": "asks-strategic-objective",
+      "passed": true,
+      "evidence": "Presents all 5 strategic objective options (volume-driven, FTE-driven, resilience, MTTR, discovery) as a labelled multiple-choice list"
+    },
+    {
+      "text": "no-premature-analysis",
+      "passed": true,
+      "evidence": "Response asks Phase 0 questions (objective, segmentation, terminology, constraints, data shape) before touching the data — no analysis produced"
+    },
+    {
+      "text": "architecture-neutral",
+      "passed": true,
+      "evidence": "No tooling choices, platform names, or architecture recommendations anywhere in the response"
+    }
+  ]
+}

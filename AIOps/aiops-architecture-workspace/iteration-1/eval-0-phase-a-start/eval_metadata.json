@@ -1,0 +1,19 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-0-phase-a-start",
+  "prompt": "We've finished the analysis session for GlobalBank. I have s1-01, s1-03 and s1-04 ready and want to design the target AIOps platform. Where do we start?",
+  "assertions": [
+    "Response contains the AIOps Architecture Session Phase A opening header (e.g. 'AIOps Architecture \u00e2\u20ac\u201d Session 2 of 3' or equivalent)",
+    "Response includes a table or list showing the four phases (constraints, UC selection, platform design, release/governance plan) and their output files (s2-01 through s2-04)",
+    "Response references the required Session 1 inputs (s1-01 context, s1-03 findings, s1-04 UC catalogue)",
+    "Response asks Phase 1 constraint questions (cloud preference, data residency, team model, build-vs-buy) before designing the platform",
+    "Response does NOT recommend specific tools, platforms, or architecture components before UC selection and constraint gathering"
+  ],
+  "assertion_names": [
+    "phase-a-session-header-present",
+    "four-phase-structure-shown",
+    "confirms-session-1-inputs",
+    "asks-constraints-first",
+    "no-premature-tooling"
+  ]
+}
