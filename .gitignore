@@ -1,0 +1,3 @@
+# Workspace directories — eval runs, benchmark outputs, sample inputs, review HTML
+# These are local development artefacts and should not be committed.
+*-workspace/

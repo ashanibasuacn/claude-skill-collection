@@ -1,6 +1,0 @@
-{
-  "eval_id": 2,
-  "eval_name": "ambiguous-start",
-  "prompt": "We're kicking off an AIOps engagement for a retail banking client. They've given us IMS tickets from the last year and a few ops workshop transcripts. How should I run this?",
-  "assertions": []
-}
