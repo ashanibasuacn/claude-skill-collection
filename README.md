@@ -6,12 +6,14 @@ Each skill packages a focused, repeatable workflow that Claude Code invokes by i
 
 ## Skills
 
-| Family | Skill | Description |
-|---|---|---|
-| [`AIOps/`](AIOps/) | `aiops-analysis` · `aiops-architecture` · `aiops-tep` | A three-session AIOps consulting engagement — use-case discovery, platform architecture, and effort estimation — each producing markdown working files and a branded HTML report. |
-| [`sdlc/`](sdlc/) | `requirements-docx` | Converts a requirements markdown file into a formal IEEE 830 Software Requirements Specification (DOCX) with cover page, version history, TOC, numbered sections, and appendices. |
+All skills live under [`skills/`](skills/), one folder each.
 
-See each folder's `README.md` for details on what the skills do and how to use them.
+| Family | Skills | Description |
+|---|---|---|
+| AIOps engagement | [`aiops-analysis`](skills/aiops-analysis/) · [`aiops-architecture`](skills/aiops-architecture/) · [`aiops-tep`](skills/aiops-tep/) | A three-session AIOps consulting engagement — use-case discovery, platform architecture, and effort estimation — each producing markdown working files and a branded HTML report. |
+| SDLC documents | [`requirements-docx`](skills/requirements-docx/) · [`technical-discovery`](skills/technical-discovery/) | Turn markdown into formal Word deliverables: `requirements-docx` produces an IEEE 830 Software Requirements Specification from a requirements file; `technical-discovery` consolidates one or more discovery notes into a Current Landscape / Technical Discovery document. Both detect structure, confirm the plan, and flag gaps as TBD rather than inventing content. |
+
+See each skill's `SKILL.md` under [`skills/`](skills/) for what it does and how it works.
 
 ---
 
@@ -31,7 +33,7 @@ Inside Claude Code, run:
 1. The first command registers this repo as a plugin marketplace (Claude Code reads `.claude-plugin/marketplace.json`).
 2. The second installs the `ppes-rde` plugin and all its skills.
 
-That's it — the four skills appear in your skills list immediately. No manual ZIP extraction, no per-skill steps.
+That's it — all skills appear in your skills list immediately. No manual ZIP extraction, no per-skill steps.
 
 ### Install from a local clone
 
@@ -68,7 +70,7 @@ You can also invoke a skill explicitly: `/ppes-rde:aiops-analysis`.
 
 - The plugin is defined by `.claude-plugin/plugin.json` (manifest, name `ppes-rde`) and `.claude-plugin/marketplace.json` (makes the repo installable as a marketplace).
 - `skills/` is the single source of truth — the skills the plugin installs. Each skill directory contains a `SKILL.md` (YAML frontmatter + workflow instructions), an optional `references/` folder for detailed reference docs, and an optional `scripts/` folder for bundled automation scripts.
-- `AIOps/` and `sdlc/` hold family-level READMEs and the local `*-workspace/` eval directories (gitignored) — the engagement docs and benchmark data that don't ship with the plugin.
+- Evaluation runs, sample inputs, and benchmark data are kept in local, untracked working directories (not committed) and don't ship with the plugin.
 
 ## Development
 
