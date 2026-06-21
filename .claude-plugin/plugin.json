@@ -1,0 +1,10 @@
+{
+  "name": "ppes-rde",
+  "description": "PPES-RDE skill collection — AIOps consulting engagement skills (analysis, architecture, estimation) and SDLC utilities including IEEE 830 requirements DOCX generation.",
+  "version": "1.0.0",
+  "author": {
+    "name": "PPES-RDE",
+    "email": "ashani.basu@accenture.com"
+  },
+  "homepage": "https://github.com/ashanibasuacn/claude-skill-collection"
+}

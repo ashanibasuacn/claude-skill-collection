@@ -1,74 +1,72 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repository.
 
-## What This Repository Is
+## What This Is
 
-A collection of Claude Code skills for delivering a structured 3-session **AIOps consulting engagement**. The skills guide a client from raw operational ticket/log data through use-case analysis, architecture design, and implementation estimation. All three sessions chain together: each session's outputs are the next session's inputs.
+A Claude Code **plugin** named **`ppes-rde`** — no application code, entirely prompt-based skill authoring. The plugin bundles every skill; once installed, skills resolve under the `ppes-rde` namespace (e.g. `ppes-rde:aiops-analysis`, `ppes-rde:requirements-docx`). Two skill families:
 
-The skills live under `AIOps/` (currently untracked by git). There is no application code — this is entirely prompt-based skill authoring.
+- **`AIOps/`** — a 3-session AIOps consulting engagement (analysis → architecture → estimation). Sessions chain: each session's outputs feed the next.
+- **`sdlc/`** — `requirements-docx`, converts a requirements markdown file into a formal IEEE 830 SRS DOCX.
+
+**Plugin wiring:**
+- `.claude-plugin/plugin.json` — manifest; `name` must stay `ppes-rde` (it sets the install namespace).
+- `.claude-plugin/marketplace.json` — makes the repo installable: `/plugin marketplace add <repo>` then `/plugin install ppes-rde@ppes-rde`.
+- `skills/` — **the single source of truth.** All four skills live here; this is what the plugin installs. Edit skills here.
+- `AIOps/` and `sdlc/` — family-level READMEs plus the local `*-workspace/` eval dirs (gitignored). No skill source or `.skill` archives live here anymore.
 
 ## Skill Structure
 
-Every skill follows an identical layout:
+Every skill under `skills/` follows the same layout:
 
 ```
-AIOps/
-├── <skill-name>/            # Source directory
-│   ├── SKILL.md             # Frontmatter + workflow instructions
-│   └── references/
-│       ├── phase-a.md       # Interactive session prompt
-│       ├── phase-b.md       # HTML report generation prompt
-│       └── [ref-*.md]       # Optional locked reference docs
-└── <skill-name>.skill       # Compiled ZIP archive (derived artifact)
+skills/
+└── <skill-name>/            # Source directory (plugin loads from here)
+    ├── SKILL.md             # YAML frontmatter (name, description) + workflow
+    ├── references/          # Docs loaded on demand (phase-a.md, phase-b.md, ref-*.md)
+    └── scripts/             # Optional bundled executables (e.g. generate_docx.py)
 ```
 
-**SKILL.md** contains YAML frontmatter (`name`, `description`) followed by workflow instructions that tell the skill to detect the current phase and read the appropriate reference file in full.
+SKILL.md detects the current phase/step and reads the relevant reference file in full.
 
-**Phase A** — Interactive: the skill conducts a structured interview, produces 3–4 numbered markdown files (`s#-##-[client]-[description].md`) into an `ai_ticket_analysis/` folder.
+**AIOps two-phase pattern:**
+- **Phase A** — Interactive interview → 3–4 numbered markdown files (`s#-##-[client]-[description].md`) in `ai_ticket_analysis/`.
+- **Phase B** — Reads Phase A outputs → styled HTML report (Accenture-branded).
 
-**Phase B** — Report generation: reads the Phase A markdown outputs and produces a styled HTML report (Accenture-branded).
+## The Three AIOps Sessions
 
-## The Three Sessions
-
-| Session | Skill file | Input | Output files |
+| Session | Skill | Input | Output files |
 |---|---|---|---|
-| 1 — Analysis | `aiops-analysis.skill` | Ticket data, SRE reports | `s1-01` through `s1-04` |
-| 2 — Architecture | `aiops-architecture.skill` | `s1-01`, `s1-03`, `s1-04` | `s2-01` through `s2-04` |
-| 3 — TEP (estimation) | `aiops-tep.skill` | Session 2 outputs | `s3-01` through `s3-03` |
+| 1 — Analysis | `aiops-analysis` | Ticket data, SRE reports | `s1-01`–`s1-04` |
+| 2 — Architecture | `aiops-architecture` | `s1-01`, `s1-03`, `s1-04` | `s2-01`–`s2-04` |
+| 3 — TEP (estimation) | `aiops-tep` | Session 2 outputs | `s3-01`–`s3-03` |
 
-## Key Conventions
+## Key Conventions (AIOps)
 
-**Output file naming:** `s#-##-[client]-[description].md`
-- `#` = session number, `##` = sequential within session, `client` = variable placeholder for the engagement client name
+- **Output naming:** `s#-##-[client]-[description].md` (`#`=session, `##`=sequence, `client`=engagement name).
+- **Output directory:** `ai_ticket_analysis/` (confirm with user before first write).
+- **UC taxonomy:** 14 use cases UC-01–UC-14, defined in analysis, referenced through architecture/estimation.
+- **Findings traceability:** Findings `F-01`, `F-02`, … from Session 1 are tied to use cases in Session 2.
+- **T-shirt sizing (Session 3):** Default `XS=1–2pd, S=3–5pd, M=6–10pd, L=11–20pd, XL=21–40pd`; user can override at session start.
+- **Reference architecture lock:** `skills/aiops-architecture/references/ref-agentic-architecture.md` is a locked ~40k-line pattern library covering all architectural concerns (Compute, Data, Knowledge, ML Pipelines, Agent Orchestration, Memory, Integration, Observability, Reliability, Security, Governance, Quality/AgentOps, FinOps) across three deployment strategies (AWS-native, Azure-native, platform-independent). Do not edit casually.
 
-**Output directory:** Always `ai_ticket_analysis/` (confirm with user before writing the first file).
+## Distribution
 
-**UC taxonomy:** 14 standard AIOps use cases (UC-01 through UC-14), defined in the analysis phase and referenced throughout architecture and estimation.
+No build step. The plugin serves skills straight from `skills/`, so edits there are live — users pull them with `/plugin marketplace update ppes-rde`. Commit and push to publish.
 
-**Findings traceability:** Findings (`F-01`, `F-02`, …) discovered in Session 1 are explicitly tied to use cases in Session 2 architecture decisions.
-
-**T-shirt sizing (Session 3):** Default conversion is `XS=1–2 pd, S=3–5 pd, M=6–10 pd, L=11–20 pd, XL=21–40 pd`. Users can override at the start of Session 3.
-
-**Reference architecture lock:** `aiops-architecture/references/ref-agentic-architecture.md` is a locked pattern library (~40 000 lines). Do not edit it casually — it defines all architectural concerns (Compute, Data, Knowledge, ML Pipelines, Agent Orchestration, Memory, Integration, Observability, Reliability, Security, Governance, Quality/AgentOps, FinOps) across three deployment strategies (AWS-native, Azure-native, platform-independent).
-
-## Packaging Skills
-
-`.skill` files are ZIP archives of the skill source directory. Rebuild after editing source:
+If you ever need a standalone single-skill `.skill` bundle (a ZIP), build it on demand — PowerShell's `Compress-Archive` only writes `.zip`, so compress then rename:
 
 ```powershell
-# From AIOps/ directory — example for aiops-analysis
-Compress-Archive -Path aiops-analysis/* -DestinationPath aiops-analysis.skill -Force
+Compress-Archive -Path skills/aiops-analysis/* -DestinationPath aiops-analysis.zip -Force
+Rename-Item aiops-analysis.zip aiops-analysis.skill -Force
 ```
 
 ## Evaluating Skills
 
-The `AIOps/aiops-analysis-workspace/` directory contains benchmarking data. Each `eval-N-*/` folder has:
-- `without_skill/outputs/response.md` — baseline (no skill definition loaded)
-- `with_skill/outputs/response.md` — response with skill active
+Eval/benchmark artifacts live in `<skill-name>-workspace/` directories (gitignored via `*-workspace/`). Each `iteration-N/eval-*/` folder holds `with_skill/` and `without_skill/` runs with `outputs/`, `grading.json`, `timing.json`; results aggregate into `benchmark.json` / `benchmark.md`.
 
-Benchmark results are summarised in `iteration-1/benchmark.md` and `benchmark.json`. The current pass rate with skill active is ~87% vs ~35% without.
+`grading.json` expectations use fields `text`, `passed`, `evidence`, plus a `summary` block (`pass_rate`, `passed`, `failed`, `total`) — the aggregator and viewer depend on these exact names.
 
-## Working with the skill-creator Skill
+## Working with skill-creator
 
-Use `/skill-creator` to create new skills, iterate on existing ones, or run evals. It understands the SKILL.md schema and the two-phase pattern used throughout this collection.
+Use `/skill-creator` to create, iterate on, or eval skills. It understands the SKILL.md schema and the patterns used here.

@@ -1,0 +1,18 @@
+{
+  "name": "ppes-rde",
+  "owner": {
+    "name": "PPES-RDE",
+    "email": "ashani.basu@accenture.com"
+  },
+  "metadata": {
+    "description": "PPES-RDE skill collection marketplace — AIOps engagement and SDLC skills.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ppes-rde",
+      "source": "./",
+      "description": "AIOps consulting engagement skills (analysis, architecture, estimation) and SDLC utilities including IEEE 830 requirements DOCX generation. Installs aiops-analysis, aiops-architecture, aiops-tep, and requirements-docx."
+    }
+  ]
+}
