@@ -18,7 +18,12 @@ in DOCX format. The skill detects the existing structure in the MD, maps it to t
 confirms the plan with the user, then runs a bundled Python script to produce the finished document.
 
 **Output includes:** cover page · version history table · auto-updating TOC · numbered SRS sections ·
-Appendices (Glossary, Acronyms, Open Issues if present)
+§6 Data Migration (when present) · Appendices (Glossary, Acronyms auto-populated, Open Issues if present)
+
+> **How content is extracted:** The script uses `get_section_full()` which captures ALL content under
+> a heading — including every nested sub-heading and its body — until the next sibling or parent
+> heading. This means deeply nested MD structures (requirement tables inside `###`/`####` sub-headings)
+> are fully included in the output. Fallback keyword matching also uses full hierarchical extraction.
 
 ---
 
@@ -34,30 +39,31 @@ Read the file in full once you have it.
 
 ## Step 2 — Detect the existing structure
 
-Scan all headings (`#`, `##`, `###`) and note which SRS section each heading maps to:
+Scan all headings (`#`, `##`, `###`, `####`) and note which SRS section each heading maps to:
 
 | If heading title contains… | Maps to SRS section |
 |---|---|
 | introduction, intro, background | 1. Introduction |
-| purpose | 1.1 Purpose |
+| purpose, objective, system objective | 1.1 Purpose |
 | scope | 1.2 Scope |
 | definitions, terms, glossary, acronyms | 1.3 Definitions & Acronyms |
 | references, reference documents | 1.4 References |
 | system overview, product description, context, product perspective | 2.1 Product Perspective |
-| product functions, key features, capabilities, system functions | 2.2 Product Functions |
-| users, stakeholders, actors, user classes | 2.3 User Classes |
+| product functions, key features, capabilities, functional capabilities | 2.2 Product Functions |
+| users, stakeholders, actors, personas, user classes | 2.3 User Classes |
 | operating environment, deployment, infrastructure, platform | 2.4 Operating Environment |
 | assumptions, dependencies | 2.5 Assumptions & Dependencies |
 | constraints, limitations | 2.6 Constraints |
-| functional requirements, features, use cases, user stories, epics, requirements | 3. Functional Requirements |
-| non-functional, nfr, quality attributes, performance, security, scalability, usability, reliability | 4. Non-Functional Requirements |
+| functional requirements, features, use cases, user stories, epics | 3. Functional Requirements |
+| non-functional, nfr, quality attributes, performance, security, scalability | 4. Non-Functional Requirements |
 | interface, integration, api, ui requirements, external systems | 5. External Interface Requirements |
+| data migration, migration requirements | 6. Data Migration Requirements |
 | glossary, definitions, terms and definitions | Appendix A |
 | acronyms, abbreviations | Appendix B |
-| open issues, tbd, risks, known issues | Appendix C |
+| open issues, gaps, open questions, tbd items, risks, known issues | Appendix C |
 
 Also scan for:
-- **Requirement IDs**: `REQ-NNN`, `FR-NNN`, `NFR-NNN`, `US-NNN` — note count per section
+- **Requirement IDs**: `REQ-NNN`, `FR-NNN`, `NFR-NNN`, `DM-NNN`, `DMG-NNN` — note count per section
 - **User stories**: lines with "As a … I want … so that …"
 - **Glossary entries**: `**Term**: definition`, `- Term: definition`, or Term/Definition tables
 
@@ -76,23 +82,25 @@ Table of Contents                  [auto-generated]
 1.  Introduction
   1.1 Purpose                      ← "## Introduction"
   1.2 Scope                        ← "### Scope"
-  1.3 Definitions & Acronyms       ← 3 definitions detected
+  1.3 Definitions & Acronyms       ← points to Appendices
   1.4 References                   [TBD placeholder]
   1.5 Document Overview            [auto-generated from structure]
 2.  Overall Description
   2.1 Product Perspective          ← "## System Overview"
-  2.2 Product Functions            [TBD placeholder]
+  2.2 Product Functions            ← "### Functional Capabilities"  (nested content included)
   2.3 User Classes                 ← "### Users"
   2.4 Operating Environment        [TBD placeholder]
   2.5 Assumptions & Dependencies   ← "### Assumptions"
   2.6 Constraints                  [TBD placeholder]
-3.  Functional Requirements        ← "## Features"  (12 items)
+3.  Functional Requirements        ← "## Features"  (12 items + all sub-sections)
 4.  Non-Functional Requirements    ← "## NFRs"  (5 items)
-5.  External Interface Requirements [TBD placeholder]
+5.  External Interface Requirements ← "## Integrations"
+6.  Data Migration Requirements    ← "## Data Migration"  (optional — omitted if absent)
 Appendix A  Glossary               ← 3 definitions extracted
-Appendix B  Acronyms               [empty table — populate later]
+Appendix B  Acronyms               [auto-populated from built-in lookup]
+Appendix C  Open Issues            ← "## Gaps" / "## Open Issues"
 ───────────────────────────────────────────────────────────────────────
-TBD placeholders: 5 sections will carry a greyed-out placeholder.
+TBD placeholders: 3 sections will carry a greyed-out placeholder.
 ```
 
 Then ask:
@@ -125,7 +133,32 @@ Confirm all fields with the user in a single compact block before generating.
 Build a JSON document plan and call the bundled script. The script needs Python 3 and `python-docx`
 (it will auto-install the library if missing).
 
-**Build the plan JSON:**
+**Build the plan JSON — section_mapping keys:**
+
+| Key | What it maps to | Notes |
+|---|---|---|
+| `purpose` | The system objective / purpose heading | |
+| `scope` | A dedicated scope section | Often TBD if not a separate heading |
+| `product_perspective` | System overview / workflow description | |
+| `product_functions` | Functional capabilities summary | Full nested content is captured |
+| `user_classes` | Actors / roles / users section | |
+| `operating_environment` | Platform / deployment / infrastructure | Often TBD if not a dedicated heading |
+| `assumptions` | Assumptions & dependencies | |
+| `constraints` | Constraints / limitations | Often TBD |
+| `functional_requirements` | The main functional requirements section | All nested `###`/`####` FR sub-sections included |
+| `non_functional_requirements` | Non-functional / NFR section | |
+| `external_interfaces` | Integration / external interface section | |
+| `data_migration` | Data migration section | Produces optional §6 |
+| `functional_gaps` | Functional gaps / open questions | → Appendix C |
+| `nfr_gaps` | Non-functional gaps | → Appendix C (appended after functional_gaps) |
+| `migration_gaps` | Migration-specific gaps | → Appendix C (appended after nfr_gaps) |
+| `open_issues` | General open issues / TBD items | → Appendix C (fallback if no gap keys set) |
+| `glossary` | Glossary / definitions section | Set to `null` to auto-extract from user_classes |
+| `acronyms` | Dedicated acronym section | Set to `null` to auto-populate from built-in lookup |
+
+Set any key to `null` (or omit it) to skip plan-based lookup and rely on keyword fallback or auto-generation.
+
+**Example plan JSON:**
 ```json
 {
   "title": "...",
@@ -137,22 +170,26 @@ Build a JSON document plan and call the bundled script. The script needs Python 
   "date": "YYYY-MM-DD",
   "confidentiality": "Internal",
   "section_mapping": {
-    "purpose":                    "### Purpose",
-    "scope":                      "### Scope",
-    "functional_requirements":    "## Features",
-    "non_functional_requirements":"## NFRs",
-    "product_perspective":        "## System Overview",
-    "user_classes":               "### Users",
-    "assumptions":                "### Assumptions",
-    "glossary":                   null,
-    "acronyms":                   null
+    "purpose":                   "### System Objective",
+    "scope":                     null,
+    "product_perspective":       "## Workflow Description",
+    "product_functions":         "### Functional Capabilities",
+    "user_classes":              "## Actors & Roles",
+    "operating_environment":     null,
+    "assumptions":               "## Assumptions",
+    "constraints":               null,
+    "functional_requirements":   "## Part 1: Functional Requirements",
+    "non_functional_requirements": "## Part 2: Non-Functional Requirements",
+    "external_interfaces":       "#### B. Integration of the System with:",
+    "data_migration":            "## Part 5: Data Migration",
+    "functional_gaps":           "## Part 3: Functional Requirement Gaps",
+    "nfr_gaps":                  "## Part 4: Non-Functional Requirement Gaps",
+    "glossary":                  "## Actors & Roles",
+    "acronyms":                  null
   },
-  "tbd_sections": ["1.4 References", "2.2 Product Functions", "2.4 Operating Environment"]
+  "tbd_sections": ["1.2 Scope", "2.4 Operating Environment", "2.6 Constraints"]
 }
 ```
-
-Include only sections where the user's MD has content in `section_mapping`; set to `null` for sections
-with no source. List every TBD section in `tbd_sections`.
 
 **Output path:** same directory as the source file, named `[source-basename]-requirements-v1.0.docx`
 unless the user specifies otherwise.
@@ -172,13 +209,36 @@ On Windows use `python` or `py`; on Mac/Linux use `python3`.
 
 ---
 
-## Step 6 — Report completion
+## Step 6 — Fill TBD placeholders (if any)
+
+If the generated document has TBD placeholders (sections where no source heading was found), offer
+to draft content for them. Typical TBD sections and how to fill them:
+
+| Section | How to draft it |
+|---|---|
+| 1.2 Scope | State what the system does (in scope), what it explicitly does NOT do (out of scope), and the business benefit. Derive from the document's purpose statement, scope notes, and assumption/constraint text. |
+| 1.4 References | List companion documents mentioned anywhere in the MD (architecture docs, design documents, standards, trackers). Build a numbered table: #, Document name, Description. |
+| 2.4 Operating Environment | Extract from NFRs (cloud platform, auth, observability), integration descriptions (mobile device types), and any deployment notes. Cover: browser/device, cloud platform, auth mechanism, key integrations. |
+| 2.6 Constraints | Derive from scope limitations, regulatory NFRs (PII, compliance), architecture mandates, and assumptions. Each constraint should be one bullet: the rule + its source ID. |
+
+To insert drafted content into the DOCX, write a small Python patch script that:
+1. Opens the DOCX with `python-docx`
+2. Finds each paragraph whose text contains `[TBD — <label>]`
+3. Inserts new paragraphs/tables immediately after it using `_p.getparent().insert()`
+4. Removes the TBD paragraph
+5. Saves the file
+
+Delete the patch script after successful execution.
+
+---
+
+## Step 7 — Report completion
 
 Tell the user:
 - Full path to the generated DOCX
 - How many sections were populated from source vs TBD placeholders
+- Count of requirement IDs, tables, and open issues captured
 - "Open the document in Word and press **Ctrl+A → F9** to refresh the Table of Contents."
-- If TBD placeholders exist, offer to help draft content for any of them now
+- If TBD placeholders remain, offer to draft and insert them now (Step 6)
 
-Read `references/srs-structure.md` if you need guidance on what each SRS section should contain
-or how to help the user fill in TBD sections.
+Read `references/srs-structure.md` if you need guidance on what each SRS section should contain.

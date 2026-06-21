@@ -38,7 +38,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 
 def parse_md_sections(text: str) -> dict:
-    """Return {heading_title: body_text} for every heading in the markdown."""
+    """Return {heading_title: immediate_body_text} for every heading (flat, no nesting)."""
     sections = {}
     current_title = None
     current_body = []
@@ -60,8 +60,43 @@ def parse_md_sections(text: str) -> dict:
     return sections
 
 
+def get_section_full(source_text: str, heading_ref: str) -> str | None:
+    """
+    Return ALL content under a heading — including every nested sub-heading and its
+    body — until the next heading at the SAME OR HIGHER level.
+
+    heading_ref may include leading # markers (e.g. '## Part 1: Functional Requirements')
+    or just the bare title text.
+    """
+    clean = re.sub(r'^#{1,4}\s+', '', heading_ref).strip()
+    lines = source_text.splitlines()
+
+    target_level: int | None = None
+    start_idx: int | None = None
+
+    for i, line in enumerate(lines):
+        m = re.match(r'^(#{1,4})\s+(.+)$', line)
+        if m and m.group(2).strip() == clean:
+            target_level = len(m.group(1))
+            start_idx = i + 1
+            break
+
+    if start_idx is None:
+        return None
+
+    body: list[str] = []
+    for line in lines[start_idx:]:
+        m = re.match(r'^(#{1,4})\s+(.+)$', line)
+        if m and len(m.group(1)) <= target_level:
+            break
+        body.append(line)
+
+    result = '\n'.join(body).strip()
+    return result if result else None
+
+
 def find_content(sections: dict, keys) -> str | None:
-    """Return body text for the first heading that contains any key (case-insensitive)."""
+    """Return body text for the first heading whose title contains any key (case-insensitive)."""
     if isinstance(keys, str):
         keys = [keys]
     for title, body in sections.items():
@@ -71,22 +106,22 @@ def find_content(sections: dict, keys) -> str | None:
     return None
 
 
-def content_from_plan(sections: dict, plan: dict, mapping_key: str) -> str | None:
-    """Resolve a section_mapping key to heading body via the plan."""
-    heading = plan.get('section_mapping', {}).get(mapping_key)
-    if not heading:
-        return None
-    title = re.sub(r'^#{1,4}\s+', '', heading).strip()
-    return sections.get(title) or None
-
-
-def get_section(sections: dict, plan: dict, mapping_key: str, fallback_keys=None) -> str | None:
-    """Try plan mapping first, then fallback keyword search."""
-    content = content_from_plan(sections, plan, mapping_key)
-    if content:
-        return content
-    if fallback_keys:
-        return find_content(sections, fallback_keys)
+def find_content_full(source_text: str, keys) -> str | None:
+    """
+    Like find_content but returns the FULL hierarchical content (via get_section_full)
+    for the first matching heading title.
+    """
+    if isinstance(keys, str):
+        keys = [keys]
+    for line in source_text.splitlines():
+        m = re.match(r'^(#{1,4})\s+(.+)$', line)
+        if m:
+            title = m.group(2).strip()
+            for key in keys:
+                if key.lower() in title.lower():
+                    content = get_section_full(source_text, title)
+                    if content:
+                        return content
     return None
 
 
@@ -136,20 +171,23 @@ def add_page_number_footer(doc):
     p.clear()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    def _field(name):
+    def _fld(name):
         run = p.add_run()
-        for tag, attr_val in [('begin', None), ('instrText', name), ('end', None)]:
-            el = OxmlElement('w:fldChar' if tag != 'instrText' else 'w:instrText')
-            if tag != 'instrText':
-                el.set(qn('w:fldCharType'), tag)
-            else:
-                el.text = name
-            run._r.append(el)
+        begin = OxmlElement('w:fldChar')
+        begin.set(qn('w:fldCharType'), 'begin')
+        run._r.append(begin)
+        instr = OxmlElement('w:instrText')
+        instr.set(qn('xml:space'), 'preserve')
+        instr.text = f' {name} '
+        run._r.append(instr)
+        end = OxmlElement('w:fldChar')
+        end.set(qn('w:fldCharType'), 'end')
+        run._r.append(end)
 
     p.add_run('Page ')
-    _field('PAGE')
+    _fld('PAGE')
     p.add_run(' of ')
-    _field('NUMPAGES')
+    _fld('NUMPAGES')
 
 
 def add_doc_header(doc, title: str, version: str, status: str):
@@ -191,6 +229,11 @@ def render_md_body(doc, content: str):
     while i < len(lines):
         line = lines[i]
 
+        # Skip horizontal rules — they are MD structural separators, not prose
+        if re.match(r'^-{3,}\s*$', line) or re.match(r'^\*{3,}\s*$', line):
+            i += 1
+            continue
+
         if line.strip().startswith('```'):
             in_code = not in_code
             i += 1
@@ -213,6 +256,17 @@ def render_md_body(doc, content: str):
             _render_md_table(doc, tbl_lines)
             continue
 
+        # Blockquote — render as indented italic paragraph
+        if line.startswith('> '):
+            inner = line[2:].strip()
+            # Strip bold markers from blockquote lead text
+            inner = re.sub(r'\*\*(.+?)\*\*', r'\1', inner)
+            inner = re.sub(r'\*(.+?)\*', r'\1', inner)
+            p = doc.add_paragraph(style='Quote')
+            p.add_run(inner)
+            i += 1
+            continue
+
         # Subheadings (inside a section body)
         h4 = re.match(r'^####\s+(.+)$', line)
         h3 = re.match(r'^###\s+(.+)$', line)
@@ -227,8 +281,6 @@ def render_md_body(doc, content: str):
             doc.add_paragraph(strip_inline_md(re.sub(r'^[-*]\s+', '', line)), style='List Bullet')
         elif re.match(r'^\d+\.\s+', line):
             doc.add_paragraph(strip_inline_md(re.sub(r'^\d+\.\s+', '', line)), style='List Number')
-        elif line.startswith('> '):
-            doc.add_paragraph(strip_inline_md(line[2:]), style='Quote')
         elif line.strip():
             doc.add_paragraph(strip_inline_md(line))
 
@@ -276,7 +328,12 @@ def parse_glossary_entries(content: str) -> list[tuple[str, str]]:
             if len(parts) >= 2 and parts[0] and parts[1]:
                 entries.append((parts[0], parts[1]))
 
-    return [(t, d) for t, d in entries if t.lower() not in ('term', 'acronym', 'name', 'word', 'definition')]
+    skip = {'term', 'acronym', 'name', 'word', 'definition', 'actor', 'description',
+            'gap id', 'area', 'open question', 'id', 'category', 'requirement',
+            'workflow', 'web portal', 'mobile app', 'notes'}
+    return [(strip_inline_md(t), strip_inline_md(d))
+            for t, d in entries
+            if t.lower() not in skip and len(t) < 80]
 
 
 def add_glossary_table(doc, entries: list[tuple[str, str]], col_header='Term'):
@@ -302,6 +359,44 @@ def add_glossary_table(doc, entries: list[tuple[str, str]], col_header='Term'):
         row.cells[1].text = 'No entries defined in source'
 
 
+# Common acronyms auto-populated when the source MD has no dedicated acronym section.
+# Add project-specific entries via section_mapping["acronyms"] in the plan JSON.
+_COMMON_ACRONYMS = [
+    ('API',    'Application Programming Interface'),
+    ('AWS',    'Amazon Web Services'),
+    ('BFF',    'Backend for Frontend'),
+    ('CI/CD',  'Continuous Integration / Continuous Delivery'),
+    ('CIP',    'Common Identity Provider (Manheim Auth Token)'),
+    ('CRUD',   'Create, Read, Update, Delete'),
+    ('CSV',    'Comma-Separated Values'),
+    ('DL',     "Driver's Licence"),
+    ('DR',     'Disaster Recovery'),
+    ('FR',     'Functional Requirement'),
+    ('FG',     'Functional Gap'),
+    ('IAM',    'Identity and Access Management'),
+    ('JWT',    'JSON Web Token'),
+    ('KMS',    'Key Management Service (AWS)'),
+    ('MFA',    'Multi-Factor Authentication'),
+    ('NFR',    'Non-Functional Requirement'),
+    ('NFG',    'Non-Functional Gap'),
+    ('OIDC',   'OpenID Connect'),
+    ('PII',    'Personally Identifiable Information'),
+    ('RBAC',   'Role-Based Access Control'),
+    ('RPO',    'Recovery Point Objective'),
+    ('RTO',    'Recovery Time Objective'),
+    ('S3',     'Amazon Simple Storage Service'),
+    ('SAST',   'Static Application Security Testing'),
+    ('SCA',    'Software Composition Analysis'),
+    ('SLA',    'Service Level Agreement'),
+    ('SLO',    'Service Level Objective'),
+    ('SRS',    'Software Requirements Specification'),
+    ('SSO',    'Single Sign-On'),
+    ('UKG',    'UKG — workforce management platform (formerly Kronos)'),
+    ('UTC',    'Coordinated Universal Time'),
+    ('WCAG',   'Web Content Accessibility Guidelines'),
+]
+
+
 # ─────────────────────────────────────────────
 # Main document generator
 # ─────────────────────────────────────────────
@@ -316,19 +411,34 @@ def generate(plan: dict, source_text: str, output_path: Path):
         for attr in ('left_margin', 'right_margin', 'top_margin', 'bottom_margin'):
             setattr(sec, attr, Cm(2.54))
 
-    title = plan.get('title', 'Software Requirements Specification')
-    version = plan.get('version', '1.0')
-    status = plan.get('status', 'Draft')
-    project = plan.get('project', '')
-    client = plan.get('client', '')
-    author = plan.get('author', '')
-    doc_date = plan.get('date', str(date.today()))
+    title          = plan.get('title', 'Software Requirements Specification')
+    version        = plan.get('version', '1.0')
+    status         = plan.get('status', 'Draft')
+    project        = plan.get('project', '')
+    client         = plan.get('client', '')
+    author         = plan.get('author', '')
+    doc_date       = plan.get('date', str(date.today()))
     confidentiality = plan.get('confidentiality', 'Internal')
 
+    # Flat sections dict — for keyword-based fallback only
     sections = parse_md_sections(source_text)
 
-    def s(mapping_key, *fallback_keys):
-        return get_section(sections, plan, mapping_key, list(fallback_keys) or None)
+    def s(mapping_key: str, *fallback_keys: str) -> str | None:
+        """
+        Resolve a section-mapping key to content.
+        1. If the plan has a heading for this key, return the FULL hierarchical
+           content under that heading (all nested sub-headings included).
+        2. Otherwise, fall back to a keyword search over heading titles and return
+           the full hierarchical content of the first match.
+        """
+        heading = plan.get('section_mapping', {}).get(mapping_key)
+        if heading:
+            content = get_section_full(source_text, heading)
+            if content:
+                return content
+        if fallback_keys:
+            return find_content_full(source_text, list(fallback_keys))
+        return None
 
     add_doc_header(doc, title, version, status)
     add_page_number_footer(doc)
@@ -353,12 +463,12 @@ def generate(plan: dict, source_text: str, output_path: Path):
     meta.alignment = WD_TABLE_ALIGNMENT.CENTER
 
     for i, (label, value) in enumerate([
-        ('Document Title', title),
-        ('Project', project or '—'),
+        ('Document Title',        title),
+        ('Project',               project or '—'),
         ('Client / Organisation', client or '—'),
-        ('Author', author or '—'),
-        ('Version', f'v{version} — {status}'),
-        ('Date', doc_date),
+        ('Author',                author or '—'),
+        ('Version',               f'v{version} — {status}'),
+        ('Date',                  doc_date),
     ]):
         row = meta.rows[i]
         row.cells[0].text = label
@@ -427,7 +537,7 @@ def generate(plan: dict, source_text: str, output_path: Path):
     render_md_body(doc, c) if c else tbd(doc, '1.4 References')
 
     doc.add_heading('1.5 Document Overview', level=2)
-    c = find_content(sections, ['document overview', 'document structure'])
+    c = find_content_full(source_text, ['document overview', 'document structure'])
     if c:
         render_md_body(doc, c)
     else:
@@ -443,11 +553,12 @@ def generate(plan: dict, source_text: str, output_path: Path):
 
     doc.add_heading('2.1 Product Perspective', level=2)
     c = s('product_perspective', 'product perspective', 'system overview', 'system context',
-          'product context', 'background', 'overview')
+          'product context', 'background', 'workflow')
     render_md_body(doc, c) if c else tbd(doc, '2.1 Product Perspective')
 
     doc.add_heading('2.2 Product Functions', level=2)
-    c = s('product_functions', 'product functions', 'system functions', 'key features', 'capabilities')
+    c = s('product_functions', 'product functions', 'system functions', 'key features',
+          'capabilities', 'functional capabilities')
     render_md_body(doc, c) if c else tbd(doc, '2.2 Product Functions')
 
     doc.add_heading('2.3 User Classes and Characteristics', level=2)
@@ -468,8 +579,19 @@ def generate(plan: dict, source_text: str, output_path: Path):
 
     # ── SECTION 3: FUNCTIONAL REQUIREMENTS ──────
     doc.add_heading('3. Functional Requirements', level=1)
-    c = s('functional_requirements', 'functional requirements', 'features', 'user stories',
-          'use cases', 'requirements', 'epics', 'functional')
+    c = s('functional_requirements')
+    if not c:
+        # Keyword fallback: look for a heading whose title contains 'functional requirement'
+        # but is NOT the document title (skip headings at level 1 that are doc titles)
+        for line in source_text.splitlines():
+            m = re.match(r'^(#{2,4})\s+(.+)$', line)   # ## or deeper only — skip H1 title
+            if m:
+                title_text = m.group(2).strip()
+                if 'functional requirement' in title_text.lower():
+                    content = get_section_full(source_text, title_text)
+                    if content:
+                        c = content
+                        break
     render_md_body(doc, c) if c else tbd(doc, '3 Functional Requirements')
 
     # ── SECTION 4: NON-FUNCTIONAL REQUIREMENTS ──
@@ -487,21 +609,28 @@ def generate(plan: dict, source_text: str, output_path: Path):
 
     # ── SECTION 5: EXTERNAL INTERFACES ──────────
     doc.add_heading('5. External Interface Requirements', level=1)
-    c = s('external_interfaces', 'external interface', 'interfaces', 'api', 'integration',
-          'ui requirements')
+    c = s('external_interfaces', 'external interface', 'interfaces', 'api', 'integration')
     if c:
         render_md_body(doc, c)
     else:
         subsections = [
-            ('5.1 User Interfaces', ['user interface', 'ui', 'ux']),
-            ('5.2 Hardware Interfaces', ['hardware interface', 'hardware']),
-            ('5.3 Software Interfaces', ['software interface', 'api', 'integration']),
+            ('5.1 User Interfaces',        ['user interface', 'ui', 'ux']),
+            ('5.2 Hardware Interfaces',    ['hardware interface', 'hardware']),
+            ('5.3 Software Interfaces',    ['software interface', 'api', 'integration']),
             ('5.4 Communication Interfaces', ['communication', 'network', 'protocol']),
         ]
         for label, keys in subsections:
             doc.add_heading(label, level=2)
-            sub = find_content(sections, keys)
+            sub = find_content_full(source_text, keys)
             render_md_body(doc, sub) if sub else tbd(doc, label)
+
+    # ── SECTION 6: DATA MIGRATION (optional) ────
+    migration_heading = plan.get('section_mapping', {}).get('data_migration')
+    if migration_heading:
+        migration_content = get_section_full(source_text, migration_heading)
+        if migration_content:
+            doc.add_heading('6. Data Migration Requirements', level=1)
+            render_md_body(doc, migration_content)
 
     # ── APPENDIX A: GLOSSARY ─────────────────────
     doc.add_page_break()
@@ -525,13 +654,35 @@ def generate(plan: dict, source_text: str, output_path: Path):
         entries = parse_glossary_entries(c)
         add_glossary_table(doc, entries, col_header='Acronym')
     else:
-        add_glossary_table(doc, [], col_header='Acronym')
+        # Auto-populate from the built-in lookup; filter to acronyms that appear in the source
+        src_upper = source_text.upper()
+        entries = [(a, exp) for a, exp in _COMMON_ACRONYMS if a.replace('/', '') in src_upper]
+        add_glossary_table(doc, sorted(entries), col_header='Acronym')
 
-    # ── APPENDIX C: OPEN ISSUES (if any) ─────────
-    c = find_content(sections, ['open issues', 'known issues', 'tbd items', 'risks'])
-    if c:
+    # ── APPENDIX C: OPEN ISSUES ───────────────────
+    # Collect content from all gap/open-issue mapping keys in the plan
+    appendix_c_parts: list[str] = []
+    for gap_key in ('open_issues', 'functional_gaps', 'nfr_gaps', 'migration_gaps', 'gaps'):
+        h = plan.get('section_mapping', {}).get(gap_key)
+        if h:
+            part = get_section_full(source_text, h)
+            if part:
+                appendix_c_parts.append(part)
+
+    if not appendix_c_parts:
+        # Fallback: keyword search for a section that looks like an open-issues list
+        fallback = find_content_full(
+            source_text,
+            ['open issues', 'known issues', 'tbd items', 'risks', 'gaps', 'open questions']
+        )
+        if fallback:
+            appendix_c_parts.append(fallback)
+
+    if appendix_c_parts:
+        doc.add_page_break()
         doc.add_heading('Appendix C: Open Issues', level=1)
-        render_md_body(doc, c)
+        for part in appendix_c_parts:
+            render_md_body(doc, part)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(output_path))
