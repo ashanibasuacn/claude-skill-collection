@@ -52,6 +52,26 @@ If you've cloned this repo locally, point the marketplace at the folder instead 
 /plugin uninstall ppes-rde@ppes-rde
 ```
 
+### Manual install (single skill, per-project)
+
+If you only need one skill in a specific project, you can copy it directly into that project's `.claude/` folder without installing the plugin:
+
+1. Copy the skill folder from `skills/<skill-name>/` into `.claude/skills/<skill-name>/` at the root of your target project:
+
+   ```powershell
+   # Example: install just requirements-docx into your project
+   Copy-Item -Recurse skills/requirements-docx C:/your-project/.claude/skills/requirements-docx
+   ```
+
+   ```bash
+   # Or with bash
+   cp -r skills/requirements-docx /your-project/.claude/skills/requirements-docx
+   ```
+
+2. The skill is immediately available in that project without a namespace prefix — invoke it as `/requirements-docx` or let it trigger automatically.
+
+This approach is project-scoped (the skill won't appear in other projects) and requires no plugin machinery. To update, re-copy the folder.
+
 ---
 
 ## Using the skills
